@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sistema de Gestão de Calendário Acadêmico</title>
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+
+<div class="main-content">
+  <header>
+    <div>
+      <h2>Gestão de Calendários Acadêmicos</h2>
+      <span id="perfil-status" style="color: #64748b; font-size: 14px;">Perfil Atual: <strong>Unidade Acadêmica (Visualização/Solicitação)</strong></span>
+    </div>
+    <div>
+      <button id="btn-login-master" class="btn btn-primary" onclick="togglePerfil()">Entrar como Master</button>
+      <button id="btn-nova-unidade" class="btn btn-success" style="display:none;" onclick="abrirModalUnidade()">+ Cadastrar Unidade</button>
+      <button id="btn-solicitacoes" class="btn btn-primary" style="display:none; background:#d97706;" onclick="abrirSolicitacoes()">Solicitações (0)</button>
+      <button class="btn btn-export" onclick="alert('Exportando relatório consolidado...')">📊 Exportar Relatório Geral</button>
+    </div>
+  </header>
+
+  <div class="nav-tabs">
+    <div class="tab active" onclick="mudarNivel('graduacao')">Calendário Graduação</div>
+    <div class="tab" onclick="mudarNivel('basica')">Calendário Ed. Básica</div>
+  </div>
+
+  <div class="sub-tabs" id="container-unidades"></div>
+
+  <div class="controls-bar">
+    <label><strong>Ano de Referência:</strong></label>
+    <select id="select-ano" onchange="renderCalendario()">
+      <option value="2027" selected>2027</option>
+      <option value="2028">2028</option>
+      <option value="2029">2029</option>
+      <option value="2030">2030</option>
+    </select>
+    <span style="color: #64748b; font-size: 13px; margin-left: 10px;">ℹ️ Clique em qualquer dia para gerenciar os eventos.</span>
+  </div>
+
+  <div class="grid-ano" id="grid-ano"></div>
+</div>
+
+<footer>
+  Secretaria Geral Acadêmica CSC
+</footer>
+
+<!-- Modal Identificação do Usuário (Primeira Modificação) -->
+<div class="modal-overlay" id="modal-identificacao">
+  <div class="modal">
+    <h3>Identificação Necessária</h3>
+    <p style="font-size: 13px; color: #475569; margin-bottom: 15px;">Para garantir a auditoria institucional, informe seus dados antes de realizar a primeira alteração neste calendário.</p>
+    <div class="form-group">
+      <label>Seu Nome Completo:</label>
+      <input type="text" id="id-nome" placeholder="Ex: João da Silva">
+    </div>
+    <div class="form-group">
+      <label>Seu E-mail Institucional:</label>
+      <input type="email" id="id-email" placeholder="Ex: joao.silva@escola.edu.br">
+    </div>
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+      <button class="btn btn-secondary" onclick="fecharModalIdentificacao()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarIdentificacao()">Continuar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Edição de Dia -->
+<div class="modal-overlay" id="modal-dia">
+  <div class="modal">
+    <h3 id="modal-titulo">Editar Dia</h3>
+    <div class="form-group">
+      <label>Descrição dos Eventos do Dia:</label>
+      <div id="container-eventos-inputs"></div>
+      <button type="button" class="btn btn-primary" style="margin-top: 8px; font-size: 13px; padding: 6px 12px;" onclick="adicionarCampoEvento('')">+ Adicionar Evento</button>
+    </div>
+    <div class="form-group" id="grupo-cor" style="margin-top: 15px;">
+      <label>Cor de Fundo do Dia:</label>
+      <div class="paleta" id="paleta-cores"></div>
+      <input type="hidden" id="select-cor" value="bg-normal">
+    </div>
+    <div class="form-group" id="grupo-letivo">
+      <label>Tipo de Dia (Cor da Numeração):</label>
+      <select id="select-letivo">
+        <option value="true">Vermelho - Dia Letivo</option>
+        <option value="false">Preto - Dia Não Letivo</option>
+      </select>
+    </div>
+    <div class="form-group" id="grupo-motivo" style="display:none;">
+      <label>Motivo / Solicitação:</label>
+      <input type="text" id="input-motivo" placeholder="Ex: Ajustar data para o dia 8 de maio">
+    </div>
+    <div class="form-group" id="grupo-travar" style="display:none;">
+      <label><input type="checkbox" id="chk-travar" style="width:auto;"> 🔒 Travar dia</label>
+    </div>
+    <p id="info-autor-sessao" style="font-size: 12px; color: #1e3a8a; font-weight: bold; margin-top: 10px;"></p>
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+      <button class="btn btn-secondary" onclick="fecharModalDia()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar-dia" onclick="salvarDia()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Solicitações (Master) -->
+<div class="modal-overlay" id="modal-solicitacoes">
+  <div class="modal" style="width:560px;">
+    <h3>Solicitações de alteração da Unidade</h3>
+    <div id="lista-solicitacoes"></div>
+    <div style="display:flex; justify-content:flex-end; margin-top: 15px;">
+      <button class="btn btn-secondary" onclick="document.getElementById('modal-solicitacoes').style.display='none'">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Nova Unidade -->
+<div class="modal-overlay" id="modal-unidade">
+  <div class="modal">
+    <h3>Cadastrar Nova Unidade</h3>
+    <div class="form-group">
+      <label>Nome da Escola / Faculdade:</label>
+      <input type="text" id="nova-unidade-nome" placeholder="Ex: Faculdade de Direito">
+    </div>
+    <div class="form-group">
+      <label><input type="checkbox" id="chk-clonar-base" style="width:auto;" checked> Clonar dados do Calendário Base</label>
+    </div>
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+      <button class="btn btn-secondary" onclick="fecharModalUnidade()">Cancelar</button>
+      <button class="btn btn-success" onclick="cadastrarUnidade()">Cadastrar</button>
+    </div>
+  </div>
+</div>
+
+<script src="./js/script.js"></script>
+</body>
+</html>
