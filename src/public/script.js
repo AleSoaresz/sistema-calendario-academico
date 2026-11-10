@@ -3,10 +3,10 @@ let nivelAtual = 'graduacao';
 let unidadeSelecionada = 'base';
 let diaEdicaoAtual = null;
 let mesEdicaoAtual = null;
-let solicitacoes = [];
+let solicitacoes = JSON.parse(localStorage.getItem('csc_solicitacoes')) || [];
 let modoSolicitacao = false;
 
-let sessoesUsuarios = {};
+let sessoesUsuarios = JSON.parse(localStorage.getItem('csc_sessoes')) || {};
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS_SEMANA = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
@@ -19,19 +19,16 @@ const CORES = [
   'bg-amarelo-fraco', 'bg-amarelo-forte'
 ];
 
-let unidades = {
+let unidades = JSON.parse(localStorage.getItem('csc_unidades')) || {
   graduacao: [
-    { id: 'base', nome: 'Calendário Base (Geral)', modificado: false, autorModificacao: '' },
-    { id: 'fac-1', nome: 'Faculdade de Tecnologia', modificado: true, autorModificacao: 'Carlos Administrador' }
+    { id: 'base', nome: 'Calendário Base (Geral)', modificado: false, autorModificacao: '' }
   ],
   basica: [
-    { id: 'base', nome: 'Calendário Base (Geral)', modificado: false, autorModificacao: '' },
-    { id: 'esc-1', nome: 'Colégio Aplicação', modificado: false, autorModificacao: '' }
+    { id: 'base', nome: 'Calendário Base (Geral)', modificado: false, autorModificacao: '' }
   ]
 };
 
-let dadosCalendario = {};
-
+let dadosCalendario = JSON.parse(localStorage.getItem('csc_dados')) || {};
 function init() {
   montarPaleta();
   renderSubTabs();
@@ -264,7 +261,9 @@ function salvarIdentificacao() {
   if (window.pendenteEdicao) {
     abrirEdicaoDia(window.pendenteEdicao.dia, window.pendenteEdicao.mes, window.pendenteEdicao.ano);
   }
+  salvarTudoLocal();
 }
+
 
 function abrirEdicaoDia(dia, mes, ano) {
   diaEdicaoAtual = dia;
@@ -351,6 +350,7 @@ function salvarDia() {
   }
 
   fecharModalDia();
+  salvarTudoLocal();
   renderSubTabs();
   renderCalendario();
 }
@@ -388,6 +388,7 @@ function enviarSolicitacao() {
   });
   
   fecharModalDia();
+  salvarTudoLocal();
   atualizarBotaoSolicitacoes();
   alert('Solicitação enviada ao Master com sucesso.');
 }
@@ -434,14 +435,13 @@ function decidirSolicitacao(id, aprovar) {
     }
   }
   solicitacoes = solicitacoes.filter(x => x.id !== id);
-  
   const solRestantesDaUnidade = solicitacoes.filter(x => x.unidadeId === unidadeSelecionada);
   if (solRestantesDaUnidade.length === 0) {
     document.getElementById('modal-solicitacoes').style.display = 'none';
   } else {
     abrirSolicitacoes();
   }
-  
+  salvarTudoLocal();
   renderSubTabs();
   renderCalendario();
 }
@@ -464,6 +464,7 @@ function cadastrarUnidade() {
           const chaveNova = `${nivelAtual}_${novoId}_${ano}_${m}`;
           dadosCalendario[chaveNova] = JSON.parse(JSON.stringify(dadosCalendario[chaveBase]));
         }
+        salvarTudoLocal();
       }
     }
 
@@ -474,6 +475,13 @@ function cadastrarUnidade() {
   } else {
     alert("Informe o nome da unidade.");
   }
+}
+
+function salvarTudoLocal() {
+  localStorage.setItem('csc_sessoes', JSON.stringify(sessoesUsuarios));
+  localStorage.setItem('csc_solicitacoes', JSON.stringify(solicitacoes));
+  localStorage.setItem('csc_dados', JSON.stringify(dadosCalendario));
+  localStorage.setItem('csc_unidades', JSON.stringify(unidades));
 }
 
 init();
